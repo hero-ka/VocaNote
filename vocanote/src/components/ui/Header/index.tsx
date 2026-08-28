@@ -17,9 +17,8 @@ const Header = ({ onAddNote }: HeaderProps) => {
                 </p>
             </div>
 
-            <Button variant="ghost" type="button" onClick={onAddNote} className=" flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 active:scale-[0.98]">
+            <Button variant="ghost" type="button" onClick={onAddNote} className=" flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-neutral-200 active:scale-[0.98]">
                 <span className="text-lg leading-none">+</span>
-
                 New Note
             </Button>
         </header>

@@ -1,23 +1,57 @@
 import { useState } from "react";
 import Header from "../components/ui/Header";
-import CreateNoteModal from "./components/CreateNoteModal";
-import NoteList from "./components/NoteList";
+import EmptyState from "./components/EmptyState";
+import NoteCard from "./components/NoteCard";
 import NoteEditor from "./components/NoteEditor";
+import { Notecolor } from "../core/constants/noteColors";
 import type { Note } from "../core/types/note";
-import { useAppDispatch, useAppSelector, } from "../core/store/hooks";
+import { useAppDispatch, useAppSelector } from "../core/store/hooks";
 import { addNote, deleteNote, } from "../core/store/slices/notesSlice";
+import OpenModal from "./components/OpenModal";
 
-const Notes = () => {
+export default function Notes() {
     const dispatch = useAppDispatch();
     const notes = useAppSelector((state) => state.notes.notes);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [activeNote, setActiveNote] = useState<Note | null>(null);
-    const openCreateModal = () => { setIsCreateModalOpen(true); };
-    const closeCreateModal = () => { setIsCreateModalOpen(false); };
+    const [title, setTitle] = useState("");
+    const [color, setColor] = useState(Notecolor[0]);
+    const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+    const activeNote = notes.find((note) => note.id === activeNoteId) ?? null;
+    const openCreateModal = () => {
+        setTitle("");
+        setColor(Notecolor[0]);
+        setIsCreateModalOpen(true);
+    };
+    const closeCreateModal = () => {
+        setIsCreateModalOpen(false);
+    };
+    const createNote = () => {
+        if (!title.trim()) return;
+        const now = new Date().toISOString();
+        const newNote: Note = {
+            id: crypto.randomUUID(),
+            title: title.trim(),
+            content: "",
+            color,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        dispatch(addNote(newNote));
+        closeCreateModal();
+    };
+
+    const handleDeleteNote = (id: string) => {
+        dispatch(deleteNote(id));
+
+        if (activeNoteId === id) {
+            setActiveNoteId(null);
+        }
+    };
 
     if (activeNote) {
         return (
-            <NoteEditor note={activeNote} onBack={() => setActiveNote(null)} />
+            <NoteEditor note={activeNote} onBack={() => setActiveNoteId(null)}/>
         );
     }
 
@@ -38,22 +72,32 @@ const Notes = () => {
                         </span>
                     </div>
 
-                    <NoteList
-                        notes={notes}
-                        onAddNote={openCreateModal}
-                        onSelectNote={setActiveNote}
-                        onDeleteNote={(id) => dispatch(deleteNote(id))}
-                    />
+                    {notes.length === 0 ? (
+                        <EmptyState onAddNote={openCreateModal} />
+                    ) : (
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {notes.map((note) => (
+                                <NoteCard
+                                    key={note.id}
+                                    note={note}
+                                    onClick={() => setActiveNoteId(note.id)}
+                                    onDelete={() => handleDeleteNote(note.id)}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </section>
             </div>
 
-            <CreateNoteModal
-                isOpen={isCreateModalOpen}
+            <OpenModal
+                isCreateModalOpen={isCreateModalOpen}
+                title={title}
+                color={color}
+                setTitle={setTitle}
+                setColor={setColor}
                 onClose={closeCreateModal}
-                onCreate={(note) => dispatch(addNote(note))}
+                onCreate={createNote}
             />
         </main>
     );
-};
-
-export default Notes;
+}
